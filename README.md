@@ -1,2 +1,2 @@
 # workspace
-Manage isolated workspaces with Linux user namespaces
+Command line for managing isolated development workspaces
