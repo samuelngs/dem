@@ -10,9 +10,11 @@ import (
 
 	"github.com/mholt/archiver"
 	"github.com/samuelngs/workspace/pkg/ext"
+	"github.com/samuelngs/workspace/pkg/log"
 	"github.com/samuelngs/workspace/pkg/util/envcomposer"
 	"github.com/samuelngs/workspace/pkg/util/fs"
 	"github.com/samuelngs/workspace/pkg/workspaceconfig"
+	"github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
 )
 
@@ -32,6 +34,7 @@ var goBinaryHost = "https://dl.google.com/go"
 type plugin struct {
 	wsconf *workspaceconfig.Config
 	goconf *goConfig
+	status *log.Status
 }
 
 type config struct {
@@ -62,34 +65,56 @@ func (v *plugin) Init(wsconf *workspaceconfig.Config) (bool, error) {
 	}
 	v.wsconf = wsconf
 	v.goconf = goconf.Workspace.With.Go
+	v.status = log.NewStatus(os.Stdout)
+	v.status.MaybeWrapLogrus(logrus.StandardLogger())
 	return true, nil
 }
 
 func (v *plugin) StartPre() error {
 	var (
 		path = filepath.Join(v.wsconf.WorkingDir, ".go", v.goconf.Version)
+		bin  = filepath.Join(path, "go", "bin", "go")
 		tar  = fmt.Sprintf("go%s.%s-%s.tar.gz", v.goconf.Version, runtime.GOOS, runtime.GOARCH)
 		url  = fmt.Sprintf("%s/%s", goBinaryHost, tar)
-		tmp  = filepath.Join(os.TempDir(), tar)
+		tmp  = filepath.Join(v.wsconf.WorkingDir, ".go", "release")
+		file = filepath.Join(tmp, tar)
 	)
-	if fs.Exists(path) {
+	if fs.Exists(bin) {
 		return nil
 	}
-	out, err := os.Create(tmp)
+	fs.Mkdir(path)
+	fs.Mkdir(tmp)
+
+	// downloading go release tar.gz
+	v.status.Start(fmt.Sprintf("[Go] Downloading prebuilt release %s (%s/%s)...", v.goconf.Version, runtime.GOOS, runtime.GOARCH))
+	out, err := os.Create(file)
 	if err != nil {
+		v.status.End(false)
 		return err
 	}
 	defer out.Close()
 	rsp, err := http.Get(url)
 	if err != nil {
+		v.status.End(false)
 		return err
 	}
 	defer rsp.Body.Close()
 	_, err = io.Copy(out, rsp.Body)
 	if err != nil {
+		v.status.End(false)
 		return err
 	}
-	return archiver.NewTarGz().Unarchive(tmp, path)
+	v.status.End(true)
+
+	// unpacking files to workspace
+	v.status.Start(fmt.Sprintf("[Go] Unpacking binaries..."))
+	if err := archiver.NewTarGz().Unarchive(file, path); err != nil {
+		v.status.End(false)
+		return err
+	}
+	v.status.End(true)
+
+	return nil
 }
 
 func (v *plugin) Environment() map[string]string {

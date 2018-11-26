@@ -10,14 +10,43 @@ import (
 	"github.com/samuelngs/workspace/cmd/list"
 	"github.com/samuelngs/workspace/cmd/shell"
 	"github.com/samuelngs/workspace/pkg/globalconfig"
+	"github.com/samuelngs/workspace/pkg/log"
 	"github.com/samuelngs/workspace/pkg/util/fs"
 	"github.com/samuelngs/workspace/pkg/util/homedir"
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
 var conf string
+var debug bool
+
+func logging() {
+	formatter := &logrus.TextFormatter{
+		// we force colors because this only forces over the isTerminal check
+		// and this will not be accurately checkable later on when we wrap
+		// the logger output with our logutil.StatusFriendlyWriter
+		ForceColors: log.IsTerminal(logrus.StandardLogger().Out),
+	}
+	if debug {
+		logrus.SetLevel(logrus.DebugLevel)
+		// display timestamp only when debug mode is enabled
+		formatter.FullTimestamp = true
+		formatter.TimestampFormat = "15:04:05"
+	} else {
+		logrus.SetLevel(logrus.InfoLevel)
+		// disable timestamp prefix in regular mode
+		formatter.DisableTimestamp = true
+		formatter.DisableLevelTruncation = true
+	}
+	// let's explicitly set stdout
+	logrus.SetOutput(os.Stdout)
+	// this formatter is the default, but the timestamps output aren't
+	// particularly useful, they're relative to the command start
+	logrus.SetFormatter(formatter)
+}
 
 func pre(cmd *cobra.Command, args []string) {
+	logging()
 	if err := globalconfig.Load(conf); err != nil {
 		os.Exit(1)
 	}
@@ -65,7 +94,8 @@ func NewCommand() *cobra.Command {
 	}
 
 	// command line flags
-	cmd.PersistentFlags().StringVarP(&conf, "config", "c", homedir.Path(".workspace.yaml"), "config file")
+	cmd.PersistentFlags().StringVarP(&conf, "config", "c", homedir.Path(".workspace.yaml"), "Location of config file")
+	cmd.PersistentFlags().BoolVarP(&debug, "debug", "d", debug, "Enable debug mode")
 
 	return cmd
 }
@@ -77,6 +107,7 @@ func Run() error {
 
 func main() {
 	if err := Run(); err != nil {
-		os.Exit(0)
+		os.Stderr.WriteString(err.Error() + "\n")
+		os.Exit(-1)
 	}
 }

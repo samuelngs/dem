@@ -10,6 +10,7 @@ import (
 
 	"github.com/samuelngs/workspace/pkg/ext"
 	"github.com/samuelngs/workspace/pkg/globalconfig"
+	"github.com/samuelngs/workspace/pkg/log"
 	"github.com/samuelngs/workspace/pkg/shell"
 	"github.com/samuelngs/workspace/pkg/util/env"
 	"github.com/samuelngs/workspace/pkg/util/envcomposer"
@@ -23,29 +24,31 @@ var key = "CWKS"
 
 func extensions(config *workspaceconfig.Config) []ext.Extension {
 	extensions := make([]ext.Extension, 0)
-	modules, err := filepath.Glob(fmt.Sprintf("%s/*.so", config.PluginsDir))
-	if err != nil {
-		return nil
-	}
-	for _, module := range modules {
-		p, err := plugin.Open(module)
+	if config.Workspace.With != nil {
+		modules, err := filepath.Glob(fmt.Sprintf("%s/*.so", config.PluginsDir))
 		if err != nil {
-			continue
+			return nil
 		}
-		v, err := p.Lookup("Export")
-		if err != nil {
-			continue
+		for _, module := range modules {
+			p, err := plugin.Open(module)
+			if err != nil {
+				continue
+			}
+			v, err := p.Lookup("Export")
+			if err != nil {
+				continue
+			}
+			i, ok := v.(*ext.Extension)
+			if !ok {
+				continue
+			}
+			m := *i
+			success, err := m.Init(config)
+			if !success || err != nil {
+				continue
+			}
+			extensions = append(extensions, m)
 		}
-		i, ok := v.(*ext.Extension)
-		if !ok {
-			continue
-		}
-		m := *i
-		success, err := m.Init(config)
-		if !success || err != nil {
-			continue
-		}
-		extensions = append(extensions, m)
 	}
 	return extensions
 }
@@ -56,22 +59,19 @@ func createSession(namespace string) error {
 	workingDir := fmt.Sprintf("%s/%s", storageDir, namespace)
 
 	if !fs.Exists(workingDir) {
-		fmt.Printf("workspace '%s' does not exist\n", namespace)
-		return nil
+		return fmt.Errorf("workspace '%s' does not exist", namespace)
 	}
 
 	configPath := fmt.Sprintf("%s/%s", workingDir, ".workspace.yaml")
 
 	yaml, err := workspaceconfig.Read(configPath)
 	if err != nil {
-		fmt.Printf("(%s) unable to read YAML configuration\n", namespace)
-		return err
+		return fmt.Errorf("(%s) unable to read YAML configuration", namespace)
 	}
 
 	config, err := workspaceconfig.Parse(yaml)
 	if err != nil {
-		fmt.Printf("(%s) unable to parse YAML configuration\n", namespace)
-		return err
+		return fmt.Errorf("(%s) unable to parse YAML configuration", namespace)
 	}
 	config.Namespace = namespace
 	config.WorkingDir = workingDir
@@ -139,7 +139,9 @@ func run(cmd *cobra.Command, args []string) error {
 	if len(args) > 0 {
 		return cmd.Usage()
 	}
-	createSession(cmd.CalledAs())
+	if err := createSession(cmd.CalledAs()); err != nil {
+		log.Debug(err)
+	}
 	return nil
 }
 

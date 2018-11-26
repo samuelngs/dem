@@ -19,9 +19,10 @@ type Config struct {
 
 // Workspace is the workspace configuration
 type Workspace struct {
-	Environment map[string]string `yaml:"environment"`
-	Aliases     map[string]string `yaml:"aliases"`
-	Shell       *Shell            `yaml:"shell"`
+	Environment map[string]string      `yaml:"environment"`
+	Aliases     map[string]string      `yaml:"aliases"`
+	Shell       *Shell                 `yaml:"shell"`
+	With        map[string]interface{} `yaml:"with"`
 }
 
 // Shell configuration
