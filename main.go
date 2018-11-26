@@ -4,15 +4,15 @@ import (
 	"os"
 	"strings"
 
-	"github.com/samuelngs/workspace/cmd/create"
-	"github.com/samuelngs/workspace/cmd/delete"
-	"github.com/samuelngs/workspace/cmd/describe"
-	"github.com/samuelngs/workspace/cmd/list"
-	"github.com/samuelngs/workspace/cmd/shell"
-	"github.com/samuelngs/workspace/pkg/globalconfig"
-	"github.com/samuelngs/workspace/pkg/log"
-	"github.com/samuelngs/workspace/pkg/util/fs"
-	"github.com/samuelngs/workspace/pkg/util/homedir"
+	"github.com/samuelngs/dem/cmd/create"
+	"github.com/samuelngs/dem/cmd/delete"
+	"github.com/samuelngs/dem/cmd/describe"
+	"github.com/samuelngs/dem/cmd/list"
+	"github.com/samuelngs/dem/cmd/shell"
+	"github.com/samuelngs/dem/pkg/globalconfig"
+	"github.com/samuelngs/dem/pkg/log"
+	"github.com/samuelngs/dem/pkg/util/fs"
+	"github.com/samuelngs/dem/pkg/util/homedir"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
@@ -68,9 +68,9 @@ func run(cmd *cobra.Command, args []string) error {
 // NewCommand returns a new cobra.Command implementing the root command for kind
 func NewCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:                   "workspace [namespace] [command]",
-		Short:                 "workspace is a tool for managing isolated development workspaces",
-		Long:                  "workspace creates and manages isolated development workspaces",
+		Use:                   "dem [namespace] [command]",
+		Short:                 "dem is a tool for managing isolated development workspaces",
+		Long:                  "dem creates and manages isolated development workspaces",
 		DisableFlagsInUseLine: true,
 		SilenceErrors:         true,
 		PersistentPreRun:      pre,
@@ -94,7 +94,7 @@ func NewCommand() *cobra.Command {
 	}
 
 	// command line flags
-	cmd.PersistentFlags().StringVarP(&conf, "config", "c", homedir.Path(".workspace.yaml"), "Location of config file")
+	cmd.PersistentFlags().StringVarP(&conf, "config", "c", homedir.Path(".dem.yaml"), "Location of config file")
 	cmd.PersistentFlags().BoolVarP(&debug, "debug", "d", debug, "Enable debug mode")
 
 	return cmd

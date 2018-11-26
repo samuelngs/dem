@@ -3,7 +3,7 @@ package homedir
 import (
 	"fmt"
 
-	"github.com/samuelngs/workspace/pkg/util/env"
+	"github.com/samuelngs/dem/pkg/util/env"
 )
 
 // Dir returns home directory path

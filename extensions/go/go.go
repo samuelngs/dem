@@ -9,11 +9,11 @@ import (
 	"runtime"
 
 	"github.com/mholt/archiver"
-	"github.com/samuelngs/workspace/pkg/ext"
-	"github.com/samuelngs/workspace/pkg/log"
-	"github.com/samuelngs/workspace/pkg/util/envcomposer"
-	"github.com/samuelngs/workspace/pkg/util/fs"
-	"github.com/samuelngs/workspace/pkg/workspaceconfig"
+	"github.com/samuelngs/dem/pkg/ext"
+	"github.com/samuelngs/dem/pkg/log"
+	"github.com/samuelngs/dem/pkg/util/envcomposer"
+	"github.com/samuelngs/dem/pkg/util/fs"
+	"github.com/samuelngs/dem/pkg/workspaceconfig"
 	"github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
 )

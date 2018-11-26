@@ -1,6 +1,6 @@
 package ext
 
-import "github.com/samuelngs/workspace/pkg/workspaceconfig"
+import "github.com/samuelngs/dem/pkg/workspaceconfig"
 
 // Extension interface
 type Extension interface {

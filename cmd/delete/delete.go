@@ -6,8 +6,8 @@ import (
 	"os"
 	"strings"
 
-	"github.com/samuelngs/workspace/pkg/globalconfig"
-	"github.com/samuelngs/workspace/pkg/util/fs"
+	"github.com/samuelngs/dem/pkg/globalconfig"
+	"github.com/samuelngs/dem/pkg/util/fs"
 	"github.com/spf13/cobra"
 )
 

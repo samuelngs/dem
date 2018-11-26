@@ -24,7 +24,7 @@ import (
 	"io"
 	"os"
 
-	"github.com/samuelngs/workspace/pkg/log/fidget"
+	"github.com/samuelngs/dem/pkg/log/fidget"
 
 	"github.com/sirupsen/logrus"
 	"golang.org/x/crypto/ssh/terminal"

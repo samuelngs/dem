@@ -4,7 +4,7 @@ import (
 	"io/ioutil"
 	"os"
 
-	"github.com/samuelngs/workspace/pkg/util/env"
+	"github.com/samuelngs/dem/pkg/util/env"
 	"gopkg.in/yaml.v2"
 )
 

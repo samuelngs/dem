@@ -5,8 +5,8 @@ import (
 	"path/filepath"
 	"text/template"
 
-	"github.com/samuelngs/workspace/pkg/util/exec"
-	"github.com/samuelngs/workspace/pkg/util/fs"
+	"github.com/samuelngs/dem/pkg/util/exec"
+	"github.com/samuelngs/dem/pkg/util/fs"
 )
 
 var zshrc, _ = template.New("zshrc").Parse(`

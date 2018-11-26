@@ -4,14 +4,14 @@ import (
 	"io/ioutil"
 	"os"
 
-	"github.com/samuelngs/workspace/pkg/util/homedir"
+	"github.com/samuelngs/dem/pkg/util/homedir"
 	"gopkg.in/yaml.v2"
 )
 
 // Settings is a GlobalConfig instance used for convienience
 var Settings = &GlobalConfig{
-	StorageDir: homedir.Path("workspace"),
-	PluginsDir: homedir.Path(".config/workspace/plugins"),
+	StorageDir: homedir.Path("workspaces"),
+	PluginsDir: homedir.Path(".config/dem/plugins"),
 }
 
 // GlobalConfig is the global configuration

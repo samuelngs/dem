@@ -3,8 +3,8 @@ package shell
 import (
 	"path/filepath"
 
-	"github.com/samuelngs/workspace/pkg/shell/zsh"
-	"github.com/samuelngs/workspace/pkg/util/exec"
+	"github.com/samuelngs/dem/pkg/shell/zsh"
+	"github.com/samuelngs/dem/pkg/util/exec"
 )
 
 // New initializes exec command
