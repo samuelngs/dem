@@ -23,6 +23,9 @@ type command struct {
 	envs           []string
 	stdin          io.Reader
 	stdout, stderr io.Writer
+	startPre       []func() error
+	startPost      []func() error
+	stopPost       []func() error
 }
 
 func (v *command) Run() error {
@@ -32,7 +35,10 @@ func (v *command) Run() error {
 	cmd.Stdin = v.stdin
 	cmd.Stdout = v.stdout
 	cmd.Stderr = v.stderr
-	return cmd.Run()
+	if err := cmd.Start(); err != nil {
+		return err
+	}
+	return cmd.Wait()
 }
 
 func (v *command) SetCommand(cmd string) {
