@@ -46,7 +46,7 @@ func (v *plugin) Init(wsconf *workspaceconfig.Config) (bool, error) {
 	if err := yaml.Unmarshal(wsconf.Src, &goconf); err != nil {
 		return false, err
 	}
-	if goconf == nil || goconf.Workspace.With.Go == nil {
+	if goconf == nil || goconf.Workspace.With.Go == nil || len(goconf.Workspace.With.Go.Version) == 0 {
 		return false, nil
 	}
 	v.wsconf = wsconf
