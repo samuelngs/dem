@@ -1,2 +1,2 @@
-# dem (development environment manager)
-Command line for managing isolated development workspaces
+# dem
+DEM stands for development environment manager, it is a command line interface program to manage isolated development workspaces.
