@@ -6,12 +6,13 @@ import (
 	"os"
 	"path/filepath"
 	"plugin"
+	"strings"
 
 	"github.com/samuelngs/workspace/pkg/ext"
 	"github.com/samuelngs/workspace/pkg/globalconfig"
+	"github.com/samuelngs/workspace/pkg/shell"
 	"github.com/samuelngs/workspace/pkg/util/env"
 	"github.com/samuelngs/workspace/pkg/util/envcomposer"
-	"github.com/samuelngs/workspace/pkg/util/exec"
 	"github.com/samuelngs/workspace/pkg/util/fs"
 	"github.com/samuelngs/workspace/pkg/util/homedir"
 	"github.com/samuelngs/workspace/pkg/workspaceconfig"
@@ -49,7 +50,7 @@ func extensions(config *workspaceconfig.Config) []ext.Extension {
 	return extensions
 }
 
-func shell(namespace string) error {
+func createSession(namespace string) error {
 	storageDir := os.ExpandEnv(globalconfig.Settings.StorageDir)
 	pluginsDir := os.ExpandEnv(globalconfig.Settings.PluginsDir)
 	workingDir := fmt.Sprintf("%s/%s", storageDir, namespace)
@@ -101,21 +102,26 @@ func shell(namespace string) error {
 	}
 
 	// prepare extensions environment variables and bin paths
-	paths := make([]string, 0)
+	var (
+		paths   = make([]string, 0)
+		aliases = config.Workspace.Aliases
+	)
 	for _, ext := range exts {
 		for key, val := range ext.Environment() {
 			envcomposer.Set(key, val)
 		}
+		for alias, cmd := range ext.Aliases() {
+			aliases[alias] = cmd
+		}
 		paths = append(paths, ext.Bin()...)
 	}
+	envcomposer.Set("EXT_PATH", strings.Join(paths, ":"))
 
-	// TODO OOOOOOOOOOOO BLAH BLAH BLAHHHHHHH
-	// path := fmt.Sprintf("PATH=%s:$PATH", strings.Join(paths, ":"))
-
-	cmd := exec.New(config.Workspace.Shell.Program, config.Workspace.Shell.Args...)
+	cmd := shell.New(config.Workspace.Shell.Program, config.Workspace.Shell.Args...)
 
 	cmd.SetDir(workingDir)
-	cmd.SetEnv(envcomposer.AsArray()...)
+	cmd.SetEnv(envcomposer.AsMap())
+	cmd.SetAliases(aliases)
 
 	for _, ext := range exts {
 		if err := ext.StartPre(); err != nil {
@@ -133,9 +139,7 @@ func run(cmd *cobra.Command, args []string) error {
 	if len(args) > 0 {
 		return cmd.Usage()
 	}
-	if err := shell(cmd.CalledAs()); err != nil {
-		fmt.Print(err)
-	}
+	createSession(cmd.CalledAs())
 	return nil
 }
 

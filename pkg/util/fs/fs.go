@@ -27,3 +27,14 @@ func Mkdir(path string) error {
 func WriteFile(path string, data []byte) error {
 	return ioutil.WriteFile(path, data, 0644)
 }
+
+// Symlink creates newname as a symbolic link to oldname.
+func Symlink(path, dest string) error {
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		return nil
+	}
+	if _, err := os.Lstat(dest); err == nil {
+		os.Remove(dest)
+	}
+	return os.Symlink(path, dest)
+}
