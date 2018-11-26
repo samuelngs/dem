@@ -37,6 +37,10 @@ type zsh struct {
 	exec.Command
 }
 
+// Unlike bash, zsh does not support flag `--init-file`. In order to modify existing
+// $PATH environment variable, and also add command alias(es) to shell, custom zsh
+// dotfiles are used to solve this specific problem. Keep in mind if $HOME/.zshrc
+// exists, the auto generated $ZDOTDIR/.zshrc will also source $HOME/.zshrc file.
 func (v *zsh) Run() error {
 	var (
 		b         bytes.Buffer

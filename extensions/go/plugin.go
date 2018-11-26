@@ -16,6 +16,17 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
+// Example of .workspace.yaml:
+//
+// workspace:
+//   shell:
+//     program: /bin/zsh
+//   with:
+//     go:
+//       version: 1.11.2
+//       goPath: false
+//       go111Module: auto
+
 var goBinaryHost = "https://dl.google.com/go"
 
 type plugin struct {
