@@ -28,10 +28,10 @@ type config struct {
 }
 
 type workspaceConfig struct {
-	Plugins *pluginsConfig `yaml:"plugins"`
+	With *withConfig `yaml:"with"`
 }
 
-type pluginsConfig struct {
+type withConfig struct {
 	Go *goConfig `yaml:"go"`
 }
 
@@ -46,11 +46,11 @@ func (v *plugin) Init(wsconf *workspaceconfig.Config) (bool, error) {
 	if err := yaml.Unmarshal(wsconf.Src, &goconf); err != nil {
 		return false, err
 	}
-	if goconf == nil || goconf.Workspace.Plugins.Go == nil {
+	if goconf == nil || goconf.Workspace.With.Go == nil {
 		return false, nil
 	}
 	v.wsconf = wsconf
-	v.goconf = goconf.Workspace.Plugins.Go
+	v.goconf = goconf.Workspace.With.Go
 	return true, nil
 }
 
