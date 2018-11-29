@@ -26,8 +26,8 @@ import (
 //   with:
 //     go:
 //       version: 1.11.2
-//       goPath: false
-//       go111Module: auto
+//       go_path: false
+//       go_111_module: auto
 
 var goBinaryHost = "https://dl.google.com/go"
 
@@ -51,8 +51,8 @@ type withConfig struct {
 
 type goConfig struct {
 	Version     string `yaml:"version"`
-	GoPath      string `yaml:"goPath"`
-	Go111Module string `yaml:"go111Module"`
+	GoPath      string `yaml:"go_path"`
+	Go111Module string `yaml:"go_111_module"`
 }
 
 func (v *plugin) Init(wsconf *workspaceconfig.Config) (bool, error) {
