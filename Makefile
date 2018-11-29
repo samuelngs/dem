@@ -42,8 +42,8 @@ $(BUILD_DIR) $(BUILD_EXTENSIONS_DIR) $(DEF_EXTENSIONS_DIR):
 	@go build -buildmode=plugin -o $(BUILD_EXTENSIONS_DIR)/$@ $(EXTENSIONS_DIR)/$*/main.go
 
 install: $(NAME) $(DEF_EXTENSIONS_DIR)
-	cp -rf $(BUILD_EXTENSIONS_DIR)/* $(DEF_EXTENSIONS_DIR)
-	cp -rf $(BUILD_DIR)/$(NAME) /usr/local/bin/$(NAME)
+	sudo cp -rf $(BUILD_DIR)/$(NAME) /usr/local/bin/$(NAME)
+	sudo cp -rf $(BUILD_EXTENSIONS_DIR)/* $(DEF_EXTENSIONS_DIR)
 
 clean:
 	rm -rf $(BUILD_DIR)
