@@ -28,6 +28,7 @@ EXTENSIONS = $(shell ls $(EXTENSIONS_DIR) | xargs -I* echo *.so)
 BUILD_DIR = output
 BUILD_EXTENSIONS_DIR = $(BUILD_DIR)/extensions
 
+DEF_BIN_PATH = /usr/local/bin
 DEF_EXTENSIONS_DIR = $(HOME)/.config/dem/plugins
 
 $(NAME): $(BUILD_DIR) $(BUILD_EXTENSIONS_DIR) $(EXTENSIONS)
@@ -42,7 +43,7 @@ $(BUILD_DIR) $(BUILD_EXTENSIONS_DIR) $(DEF_EXTENSIONS_DIR):
 	@go build -buildmode=plugin -o $(BUILD_EXTENSIONS_DIR)/$@ $(EXTENSIONS_DIR)/$*/main.go
 
 install: $(NAME) $(DEF_EXTENSIONS_DIR)
-	sudo cp -rf $(BUILD_DIR)/$(NAME) /usr/local/bin/$(NAME)
+	sudo cp -rf $(BUILD_DIR)/$(NAME) $(DEF_BIN_PATH)/$(NAME)
 	sudo cp -rf $(BUILD_EXTENSIONS_DIR)/* $(DEF_EXTENSIONS_DIR)
 
 clean:
