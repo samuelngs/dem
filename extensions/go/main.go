@@ -10,11 +10,9 @@ import (
 
 	"github.com/mholt/archiver"
 	"github.com/samuelngs/dem/pkg/ext"
-	"github.com/samuelngs/dem/pkg/log"
 	"github.com/samuelngs/dem/pkg/util/envcomposer"
 	"github.com/samuelngs/dem/pkg/util/fs"
 	"github.com/samuelngs/dem/pkg/workspaceconfig"
-	"github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
 )
 
@@ -34,7 +32,6 @@ var goBinaryHost = "https://dl.google.com/go"
 type plugin struct {
 	wsconf *workspaceconfig.Config
 	goconf *goConfig
-	status *log.Status
 }
 
 type config struct {
@@ -65,12 +62,10 @@ func (v *plugin) Init(wsconf *workspaceconfig.Config) (bool, error) {
 	}
 	v.wsconf = wsconf
 	v.goconf = goconf.Workspace.With.Go
-	v.status = log.NewStatus(os.Stdout)
-	v.status.MaybeWrapLogrus(logrus.StandardLogger())
 	return true, nil
 }
 
-func (v *plugin) StartPre() error {
+func (v *plugin) SetupTasks() ext.SetupTasks {
 	var (
 		path = filepath.Join(v.wsconf.WorkingDir, ".go", v.goconf.Version)
 		bin  = filepath.Join(path, "go", "bin", "go")
@@ -82,39 +77,36 @@ func (v *plugin) StartPre() error {
 	if fs.Exists(bin) {
 		return nil
 	}
-	fs.Mkdir(path)
-	fs.Mkdir(tmp)
-
-	// downloading go release tar.gz
-	v.status.Start(fmt.Sprintf("[Go] Downloading prebuilt release %s (%s/%s)...", v.goconf.Version, runtime.GOOS, runtime.GOARCH))
-	out, err := os.Create(file)
-	if err != nil {
-		v.status.End(false)
-		return err
+	return ext.SetupTasks{
+		ext.Procedure("initializing", func(bar ext.ProgressBar) error {
+			fs.Mkdir(path)
+			fs.Mkdir(tmp)
+			return nil
+		}),
+		ext.Procedure("downloading", func(bar ext.ProgressBar) error {
+			out, err := os.Create(file)
+			if err != nil {
+				return err
+			}
+			defer out.Close()
+			rsp, err := http.Get(url)
+			if err != nil {
+				return err
+			}
+			defer rsp.Body.Close()
+			_, err = io.Copy(out, rsp.Body)
+			if err != nil {
+				return err
+			}
+			return nil
+		}),
+		ext.Procedure("unpacking", func(bar ext.ProgressBar) error {
+			if err := archiver.NewTarGz().Unarchive(file, path); err != nil {
+				return err
+			}
+			return nil
+		}),
 	}
-	defer out.Close()
-	rsp, err := http.Get(url)
-	if err != nil {
-		v.status.End(false)
-		return err
-	}
-	defer rsp.Body.Close()
-	_, err = io.Copy(out, rsp.Body)
-	if err != nil {
-		v.status.End(false)
-		return err
-	}
-	v.status.End(true)
-
-	// unpacking files to workspace
-	v.status.Start(fmt.Sprintf("[Go] Unpacking binaries..."))
-	if err := archiver.NewTarGz().Unarchive(file, path); err != nil {
-		v.status.End(false)
-		return err
-	}
-	v.status.End(true)
-
-	return nil
 }
 
 func (v *plugin) Environment() map[string]string {
@@ -132,8 +124,12 @@ func (v *plugin) Aliases() map[string]string {
 	return nil
 }
 
-func (v *plugin) Bin() []string {
+func (v *plugin) Paths() []string {
 	return []string{filepath.Join(v.wsconf.WorkingDir, ".go", v.goconf.Version, "go", "bin")}
+}
+
+func (v *plugin) String() string {
+	return "Go"
 }
 
 // Export is a plugin instance used for workspace
