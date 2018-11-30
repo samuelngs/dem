@@ -21,7 +21,7 @@ import (
 //     program: /bin/zsh
 //   with:
 //     rust:
-//	     version: 1.29.2
+//       version: 1.29.2
 
 type plugin struct {
 	wsconf            *workspaceconfig.Config
