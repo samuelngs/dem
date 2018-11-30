@@ -8,6 +8,7 @@ import (
 	"plugin"
 	"strings"
 
+	"github.com/samuelngs/dem/cmd/shell/edit"
 	"github.com/samuelngs/dem/pkg/ext"
 	"github.com/samuelngs/dem/pkg/globalconfig"
 	"github.com/samuelngs/dem/pkg/shell"
@@ -150,5 +151,6 @@ func NewCommand(namespace string) *cobra.Command {
 		Hidden:                true,
 		RunE:                  run,
 	}
+	cmd.AddCommand(edit.NewCommand(namespace))
 	return cmd
 }
