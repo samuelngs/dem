@@ -10,7 +10,6 @@ import (
 
 	"github.com/samuelngs/dem/pkg/ext"
 	"github.com/samuelngs/dem/pkg/globalconfig"
-	"github.com/samuelngs/dem/pkg/log"
 	"github.com/samuelngs/dem/pkg/shell"
 	"github.com/samuelngs/dem/pkg/util/env"
 	"github.com/samuelngs/dem/pkg/util/envcomposer"
@@ -113,7 +112,7 @@ func createSession(namespace string) error {
 		for alias, cmd := range ext.Aliases() {
 			aliases[alias] = cmd
 		}
-		paths = append(paths, ext.Bin()...)
+		paths = append(paths, ext.Paths()...)
 	}
 	envcomposer.Set("EXT_PATH", strings.Join(paths, ":"))
 
@@ -123,11 +122,7 @@ func createSession(namespace string) error {
 	cmd.SetEnv(envcomposer.AsMap())
 	cmd.SetAliases(aliases)
 
-	for _, ext := range exts {
-		if err := ext.StartPre(); err != nil {
-			return err
-		}
-	}
+	ext.Setup(exts...)
 
 	return cmd.Run()
 }
@@ -139,9 +134,7 @@ func run(cmd *cobra.Command, args []string) error {
 	if len(args) > 0 {
 		return cmd.Usage()
 	}
-	if err := createSession(cmd.CalledAs()); err != nil {
-		log.Debug(err)
-	}
+	createSession(cmd.CalledAs())
 	return nil
 }
 
