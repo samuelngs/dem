@@ -13,11 +13,13 @@ type Command interface {
 	SetDir(string)
 	SetEnv(map[string]string)
 	SetAliases(map[string]string)
+	SetSources(...string)
 	SetStdin(io.Reader)
 	SetStdout(io.Writer)
 	SetStderr(io.Writer)
 	GetEnv(string) string
 	GetAliases() map[string]string
+	GetSources() []string
 }
 
 type command struct {
@@ -26,6 +28,7 @@ type command struct {
 	args           []string
 	envs           map[string]string
 	aliases        map[string]string
+	sources        []string
 	stdin          io.Reader
 	stdout, stderr io.Writer
 }
@@ -72,6 +75,10 @@ func (v *command) SetAliases(aliases map[string]string) {
 	}
 }
 
+func (v *command) SetSources(sources ...string) {
+	v.sources = append(v.sources, sources...)
+}
+
 func (v *command) SetStdin(reader io.Reader) {
 	v.stdin = reader
 }
@@ -92,6 +99,10 @@ func (v *command) GetAliases() map[string]string {
 	return v.aliases
 }
 
+func (v *command) GetSources() []string {
+	return v.sources
+}
+
 // New creates abstracted command interface
 func New(cmd string, args ...string) Command {
 	c := &command{
@@ -99,6 +110,7 @@ func New(cmd string, args ...string) Command {
 		args:    args,
 		envs:    make(map[string]string),
 		aliases: make(map[string]string),
+		sources: make([]string, 0),
 		stdin:   os.Stdin,
 		stdout:  os.Stdout,
 		stderr:  os.Stderr,

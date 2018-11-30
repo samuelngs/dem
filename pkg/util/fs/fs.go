@@ -11,17 +11,6 @@ func Exists(path string) bool {
 	return !os.IsNotExist(err)
 }
 
-// Mkdir creates directory if it does not exist
-func Mkdir(path string) error {
-	_, err := os.Stat(path)
-	if os.IsNotExist(err) {
-		if err := os.MkdirAll(path, 0755); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
 // WriteFile saves data to file. If the file does not
 // exist, it will create a file and write data to it.
 func WriteFile(path string, data []byte) error {
@@ -37,4 +26,17 @@ func Symlink(path, dest string) error {
 		os.Remove(dest)
 	}
 	return os.Symlink(path, dest)
+}
+
+// Mkdir creates directory if it does not exist
+func Mkdir(s ...string) error {
+	for _, path := range s {
+		_, err := os.Stat(path)
+		if os.IsNotExist(err) {
+			if err := os.MkdirAll(path, 0755); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
 }

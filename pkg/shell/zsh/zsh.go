@@ -13,6 +13,7 @@ var zshrc, _ = template.New("zshrc").Parse(`
 {{- $homedir := .Home -}}
 {{- $extension_bin := .ExtensionBin -}}
 {{- $aliases := .Aliases -}}
+{{- $sources := .Sources -}}
 
 if [ -f "{{$homedir}}/.zshrc" ]; then
   source {{$homedir}}/.zshrc
@@ -25,12 +26,17 @@ fi
 {{- range $alias, $command := $aliases}}
 alias {{$alias}}="{{$command}}"
 {{end}}
+
+{{- range $source := $sources}}
+source {{$source}}
+{{end}}
 `)
 
 type options struct {
 	Home         string
 	ExtensionBin string
 	Aliases      map[string]string
+	Sources      []string
 }
 
 type zsh struct {
@@ -54,6 +60,7 @@ func (v *zsh) Run() error {
 		Home:         homedir,
 		ExtensionBin: v.GetEnv("EXT_PATH"),
 		Aliases:      v.GetAliases(),
+		Sources:      v.GetSources(),
 	}
 
 	// write zsh startup files

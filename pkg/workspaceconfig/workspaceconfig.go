@@ -10,11 +10,12 @@ import (
 
 // Config is the root of configuration
 type Config struct {
-	Namespace  string     `yaml:"-"`
-	WorkingDir string     `yaml:"-"`
-	PluginsDir string     `yaml:"-"`
-	Src        []byte     `yaml:"-"`
-	Workspace  *Workspace `yaml:"workspace"`
+	Namespace       string     `yaml:"-"`
+	WorkingDir      string     `yaml:"-"`
+	PluginsDir      string     `yaml:"-"`
+	InstallationDir string     `yaml:"-"`
+	Src             []byte     `yaml:"-"`
+	Workspace       *Workspace `yaml:"workspace"`
 }
 
 // Workspace is the workspace configuration

@@ -10,6 +10,7 @@ type Extension interface {
 	SetupTasks() SetupTasks
 	Environment() map[string]string
 	Aliases() map[string]string
+	Sources() []string
 	Paths() []string
 	String() string
 }

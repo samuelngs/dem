@@ -104,10 +104,22 @@ func Setup(extensions ...Extension) error {
 				bar := p.AddBar(total, options...)
 				progressBars[j] = bar
 
-				setupTask.Handler(bar)
-
+				err := setupTask.Handler(bar)
 				for !bar.Completed() {
 					bar.IncrBy(1)
+				}
+
+				if err != nil {
+					repl := p.AddBar(1,
+						mpb.BarClearOnComplete(),
+						mpb.BarReplaceOnComplete(bar),
+						mpb.PrependDecorators(
+							decor.Name(task, decor.WC{W: taskLen, C: decor.DidentRight}),
+							decor.OnComplete(decor.Name(status, decor.WC{W: statusLen, C: decor.DidentRight}), err.Error()),
+						),
+					)
+					repl.IncrBy(1)
+					break
 				}
 			}
 		}(extension)
