@@ -2,14 +2,12 @@ package main
 
 import (
 	"fmt"
-	"io"
-	"net/http"
-	"os"
 	"path/filepath"
 	"runtime"
 
 	"github.com/mholt/archiver"
 	"github.com/samuelngs/dem/pkg/ext"
+	"github.com/samuelngs/dem/pkg/util/downloader"
 	"github.com/samuelngs/dem/pkg/util/envcomposer"
 	"github.com/samuelngs/dem/pkg/util/fs"
 	"github.com/samuelngs/dem/pkg/workspaceconfig"
@@ -30,8 +28,14 @@ import (
 var goBinaryHost = "https://dl.google.com/go"
 
 type plugin struct {
-	wsconf *workspaceconfig.Config
-	goconf *goConfig
+	wsconf       *workspaceconfig.Config
+	goconf       *goConfig
+	binPath      string
+	tarName      string
+	releasesPath string
+	installURL   string
+	installPath  string
+	downloadPath string
 }
 
 type config struct {
@@ -62,46 +66,36 @@ func (v *plugin) Init(wsconf *workspaceconfig.Config) (bool, error) {
 	}
 	v.wsconf = wsconf
 	v.goconf = goconf.Workspace.With.Go
+	v.tarName = fmt.Sprintf("go%s.%s-%s.tar.gz", v.goconf.Version, runtime.GOOS, runtime.GOARCH)
+	v.installURL = fmt.Sprintf("%s/%s", goBinaryHost, v.tarName)
+	v.installPath = filepath.Join(v.wsconf.InstallationDir, ".go", v.goconf.Version)
+	v.releasesPath = filepath.Join(v.wsconf.InstallationDir, ".go", "releases")
+	v.downloadPath = filepath.Join(v.releasesPath, v.tarName)
+	v.binPath = filepath.Join(v.installPath, "go", "bin", "go")
 	return true, nil
 }
 
 func (v *plugin) SetupTasks() ext.SetupTasks {
-	var (
-		path = filepath.Join(v.wsconf.WorkingDir, ".go", v.goconf.Version)
-		bin  = filepath.Join(path, "go", "bin", "go")
-		tar  = fmt.Sprintf("go%s.%s-%s.tar.gz", v.goconf.Version, runtime.GOOS, runtime.GOARCH)
-		url  = fmt.Sprintf("%s/%s", goBinaryHost, tar)
-		tmp  = filepath.Join(v.wsconf.WorkingDir, ".go", "release")
-		file = filepath.Join(tmp, tar)
-	)
-	if fs.Exists(bin) {
+	if fs.Exists(v.binPath) {
 		return nil
 	}
 	return ext.SetupTasks{
 		ext.Procedure("initializing", func(bar ext.ProgressBar) error {
-			fs.Mkdir(path)
-			fs.Mkdir(tmp)
-			return nil
+			return fs.Mkdir(v.installPath, v.releasesPath)
 		}),
 		ext.Procedure("downloading", func(bar ext.ProgressBar) error {
-			out, err := os.Create(file)
-			if err != nil {
-				return err
-			}
-			defer out.Close()
-			rsp, err := http.Get(url)
-			if err != nil {
-				return err
-			}
-			defer rsp.Body.Close()
-			_, err = io.Copy(out, rsp.Body)
-			if err != nil {
-				return err
-			}
-			return nil
+			cb := make(chan int)
+			go func() {
+				var lp int
+				for progress := range cb {
+					bar.IncrBy(progress - lp)
+					lp = progress
+				}
+			}()
+			return downloader.New(v.installURL, v.downloadPath).Start(cb)
 		}),
 		ext.Procedure("unpacking", func(bar ext.ProgressBar) error {
-			if err := archiver.NewTarGz().Unarchive(file, path); err != nil {
+			if err := archiver.NewTarGz().Unarchive(v.downloadPath, v.installPath); err != nil {
 				return err
 			}
 			return nil
@@ -124,12 +118,19 @@ func (v *plugin) Aliases() map[string]string {
 	return nil
 }
 
+func (v *plugin) Sources() []string {
+	return nil
+}
+
 func (v *plugin) Paths() []string {
-	return []string{filepath.Join(v.wsconf.WorkingDir, ".go", v.goconf.Version, "go", "bin")}
+	return []string{filepath.Join(v.installPath, "go", "bin")}
 }
 
 func (v *plugin) String() string {
-	return "Go"
+	if v.goconf != nil && len(v.goconf.Version) > 0 {
+		return fmt.Sprintf("go %s", v.goconf.Version)
+	}
+	return "go"
 }
 
 // Export is a plugin instance used for workspace
