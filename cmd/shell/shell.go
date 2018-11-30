@@ -75,6 +75,7 @@ func createSession(namespace string) error {
 	config.Namespace = namespace
 	config.WorkingDir = workingDir
 	config.PluginsDir = pluginsDir
+	config.InstallationDir = filepath.Join(workingDir, ".installation")
 	config.Src = yaml
 
 	// load workspace extensions
