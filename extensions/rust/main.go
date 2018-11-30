@@ -1,12 +1,13 @@
 package main
 
 import (
-	"bytes"
+	"fmt"
+	"os"
 	"path/filepath"
-	"time"
 
 	"github.com/samuelngs/dem/pkg/ext"
 	"github.com/samuelngs/dem/pkg/shell"
+	"github.com/samuelngs/dem/pkg/util/downloader"
 	"github.com/samuelngs/dem/pkg/util/envcomposer"
 	"github.com/samuelngs/dem/pkg/util/fs"
 	"github.com/samuelngs/dem/pkg/workspaceconfig"
@@ -20,11 +21,15 @@ import (
 //     program: /bin/zsh
 //   with:
 //     rust:
+//	     version: 1.29.2
 
 type plugin struct {
-	wsconf     *workspaceconfig.Config
-	cargoPath  string
-	rustupPath string
+	wsconf            *workspaceconfig.Config
+	rsconf            *rustConfig
+	cargoPath         string
+	rustupPath        string
+	utlityPath        string
+	installScriptPath string
 }
 
 type config struct {
@@ -40,6 +45,7 @@ type withConfig struct {
 }
 
 type rustConfig struct {
+	Version string `yaml:"version"`
 }
 
 func (v *plugin) Init(wsconf *workspaceconfig.Config) (bool, error) {
@@ -47,10 +53,16 @@ func (v *plugin) Init(wsconf *workspaceconfig.Config) (bool, error) {
 	if err := yaml.Unmarshal(wsconf.Src, &rustconf); err != nil {
 		return false, err
 	}
+	if rustconf == nil || rustconf.Workspace.With.Rust == nil || len(rustconf.Workspace.With.Rust.Version) == 0 {
+		return false, nil
+	}
 	v.wsconf = wsconf
-	v.cargoPath = filepath.Join(v.wsconf.InstallationDir, ".cargo")
-	v.rustupPath = filepath.Join(v.wsconf.InstallationDir, ".multirust")
-	return rustconf != nil, nil
+	v.rsconf = rustconf.Workspace.With.Rust
+	v.cargoPath = filepath.Join(v.wsconf.InstallationDir, "rust", v.rsconf.Version, ".cargo")
+	v.rustupPath = filepath.Join(v.wsconf.InstallationDir, "rust", v.rsconf.Version, ".multirust")
+	v.utlityPath = filepath.Join(v.wsconf.InstallationDir, "rust", "helper")
+	v.installScriptPath = filepath.Join(v.utlityPath, "rustup")
+	return true, nil
 }
 
 func (v *plugin) SetupTasks() ext.SetupTasks {
@@ -59,26 +71,38 @@ func (v *plugin) SetupTasks() ext.SetupTasks {
 		return nil
 	}
 	return ext.SetupTasks{
-		ext.Procedure("installing", func(bar ext.ProgressBar) error {
+		ext.Procedure("initializing", func(bar ext.ProgressBar) error {
+			return fs.Mkdir(v.utlityPath)
+		}),
+		ext.Procedure("downloading", func(bar ext.ProgressBar) error {
+			cb := make(chan int)
 			go func() {
-				for !bar.Completed() {
-					bar.IncrBy(1)
-					time.Sleep(2 * time.Second)
+				var lp int
+				for progress := range cb {
+					if !bar.Completed() {
+						bar.IncrBy(progress - lp)
+						lp = progress
+					}
 				}
 			}()
-			silent := new(bytes.Buffer)
+			return downloader.New("https://sh.rustup.rs", v.installScriptPath).Start(cb)
+		}),
+		ext.Procedure("installing", func(bar ext.ProgressBar) error {
+			if err := os.Chmod(v.installScriptPath, 0755); err != nil {
+				return err
+			}
 			envcomposer := envcomposer.New()
 			envcomposer.Set("CARGO_HOME", v.cargoPath)
 			envcomposer.Set("RUSTUP_HOME", v.rustupPath)
 			envcomposer.Set("SHELL", config.Workspace.Shell.Program)
 			envcomposer.Set("USER", config.Namespace)
 			envcomposer.Set("HOME", config.WorkingDir)
-			cmd := shell.New(v.wsconf.Workspace.Shell.Program, "-c", "curl https://sh.rustup.rs -sSf | sh -s -- -y --no-modify-path")
+			cmd := shell.New(v.installScriptPath, "--no-modify-path", "--default-toolchain", v.rsconf.Version, "-y")
 			cmd.SetDir(config.WorkingDir)
 			cmd.SetEnv(envcomposer.AsMap())
-			cmd.SetStdout(silent)
-			cmd.SetStdin(silent)
-			cmd.SetStderr(silent)
+			cmd.SetStdin(nil)
+			cmd.SetStdout(nil)
+			cmd.SetStderr(nil)
 			return cmd.Run()
 		}),
 	}
@@ -104,6 +128,9 @@ func (v *plugin) Paths() []string {
 }
 
 func (v *plugin) String() string {
+	if v.rsconf != nil && len(v.rsconf.Version) > 0 {
+		return fmt.Sprintf("rust %s", v.rsconf.Version)
+	}
 	return "rust"
 }
 

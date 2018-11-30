@@ -68,8 +68,8 @@ func (v *plugin) Init(wsconf *workspaceconfig.Config) (bool, error) {
 	v.goconf = goconf.Workspace.With.Go
 	v.tarName = fmt.Sprintf("go%s.%s-%s.tar.gz", v.goconf.Version, runtime.GOOS, runtime.GOARCH)
 	v.installURL = fmt.Sprintf("%s/%s", goBinaryHost, v.tarName)
-	v.installPath = filepath.Join(v.wsconf.InstallationDir, ".go", v.goconf.Version)
-	v.releasesPath = filepath.Join(v.wsconf.InstallationDir, ".go", "releases")
+	v.installPath = filepath.Join(v.wsconf.InstallationDir, "go", v.goconf.Version)
+	v.releasesPath = filepath.Join(v.wsconf.InstallationDir, "go", "releases")
 	v.downloadPath = filepath.Join(v.releasesPath, v.tarName)
 	v.binPath = filepath.Join(v.installPath, "go", "bin", "go")
 	return true, nil
