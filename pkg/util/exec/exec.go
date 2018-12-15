@@ -10,6 +10,8 @@ import (
 // Command abstracts over creating command
 type Command interface {
 	Run() error
+	SetCommand(string)
+	SetArgs(...string)
 	SetDir(string)
 	SetEnv(map[string]string)
 	SetAliases(map[string]string)
@@ -17,7 +19,10 @@ type Command interface {
 	SetStdin(io.Reader)
 	SetStdout(io.Writer)
 	SetStderr(io.Writer)
+	GetCommand() string
+	GetArgs() []string
 	GetEnv(string) string
+	GetEnvs() map[string]string
 	GetAliases() map[string]string
 	GetSources() []string
 }
@@ -91,8 +96,20 @@ func (v *command) SetStderr(writer io.Writer) {
 	v.stderr = writer
 }
 
+func (v *command) GetCommand() string {
+	return v.cmd
+}
+
+func (v *command) GetArgs() []string {
+	return v.args
+}
+
 func (v *command) GetEnv(key string) string {
 	return v.envs[key]
+}
+
+func (v *command) GetEnvs() map[string]string {
+	return v.envs
 }
 
 func (v *command) GetAliases() map[string]string {
