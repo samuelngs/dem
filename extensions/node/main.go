@@ -8,7 +8,6 @@ import (
 	"github.com/mholt/archiver"
 	"github.com/samuelngs/dem/pkg/ext"
 	"github.com/samuelngs/dem/pkg/util/downloader"
-	"github.com/samuelngs/dem/pkg/util/envcomposer"
 	"github.com/samuelngs/dem/pkg/util/fs"
 	"github.com/samuelngs/dem/pkg/workspaceconfig"
 	"gopkg.in/yaml.v2"
@@ -66,8 +65,8 @@ func (v *plugin) Init(wsconf *workspaceconfig.Config) (bool, error) {
 	v.refName = fmt.Sprintf("node-v%s-%s-x64", v.nodeconf.Version, runtime.GOOS)
 	v.tarName = fmt.Sprintf("%s.tar.gz", v.refName)
 	v.installURL = fmt.Sprintf("%s/v%s/%s", nodeBinaryHost, v.nodeconf.Version, v.tarName)
-	v.installPath = filepath.Join(v.wsconf.InstallationDir, "node", v.nodeconf.Version)
-	v.releasesPath = filepath.Join(v.wsconf.InstallationDir, "node", "releases")
+	v.installPath = filepath.Join(v.wsconf.InstallationDir, "node")
+	v.releasesPath = filepath.Join(v.installPath, "releases")
 	v.downloadPath = filepath.Join(v.releasesPath, v.tarName)
 	v.binPath = filepath.Join(v.installPath, v.refName, "bin", "node")
 	return true, nil
@@ -102,8 +101,7 @@ func (v *plugin) SetupTasks() ext.SetupTasks {
 }
 
 func (v *plugin) Environment() map[string]string {
-	composer := envcomposer.New()
-	return composer.AsMap()
+	return nil
 }
 
 func (v *plugin) Aliases() map[string]string {
