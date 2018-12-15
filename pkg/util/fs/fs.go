@@ -17,6 +17,15 @@ func WriteFile(path string, data []byte) error {
 	return ioutil.WriteFile(path, data, 0644)
 }
 
+// IsSymlink checks if path is a symbolic link
+func IsSymlink(path string) bool {
+	_, err := os.Readlink(path)
+	if err != nil {
+		return false
+	}
+	return true
+}
+
 // Symlink creates newname as a symbolic link to oldname.
 func Symlink(path, dest string) error {
 	if _, err := os.Stat(path); os.IsNotExist(err) {
@@ -39,4 +48,9 @@ func Mkdir(s ...string) error {
 		}
 	}
 	return nil
+}
+
+// Rename renames (moves) oldpath to newpath.
+func Rename(oldpath, newpath string) error {
+	return os.Rename(oldpath, newpath)
 }
