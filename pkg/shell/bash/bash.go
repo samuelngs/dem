@@ -79,7 +79,7 @@ func (v *bash) Run() error {
 	// | To run a command as administrator (user "root"), use "sudo <command>".
 	// | See "man sudo_root" for details.
 	// -------------------------------------------------------------------------
-	fs.WriteFile(sudoWarningPath, []byte(""))
+	fs.WriteFile(sudoWarningPath, nil)
 
 	// override arguments
 	v.Command.SetArgs("--rcfile", bashrcPath)
@@ -89,5 +89,5 @@ func (v *bash) Run() error {
 
 // New initializes bash version of exec command
 func New(command string, args ...string) exec.Command {
-	return &bash{exec.New(command, args...)}
+	return &bash{exec.New(command)}
 }

@@ -81,5 +81,5 @@ func (v *bash) Run() error {
 
 // New initializes sh version of exec command
 func New(command string, args ...string) exec.Command {
-	return &bash{exec.New(command, args...)}
+	return &bash{exec.New(command, "-l")}
 }

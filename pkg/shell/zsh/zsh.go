@@ -93,5 +93,5 @@ func (v *zsh) Run() error {
 
 // New initializes zsh version of exec command
 func New(command string, args ...string) exec.Command {
-	return &zsh{exec.New(command, args...)}
+	return &zsh{exec.New(command, "-l")}
 }
