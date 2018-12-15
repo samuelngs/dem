@@ -1,4 +1,4 @@
-package zsh
+package sh
 
 import (
 	"bytes"
@@ -9,15 +9,19 @@ import (
 	"github.com/samuelngs/dem/pkg/util/fs"
 )
 
-var zshrc, _ = template.New("zshrc").Parse(`
+var profile, _ = template.New("profile").Parse(`
 {{- $homedir := .Home -}}
 {{- $extension_bin := .ExtensionBin -}}
 {{- $aliases := .Aliases -}}
 {{- $sources := .Sources -}}
 {{- $envvars := .EnvironmentVariables -}}
 
-if [ -f "{{$homedir}}/.zshrc" ]; then
-  source {{$homedir}}/.zshrc
+if [ "$SHELL" != "/bin/sh" ]; then
+  exit 0
+fi
+
+if [ -f "{{$homedir}}/.profile_custom" ]; then
+  source {{$homedir}}/.profile_custom
 fi
 
 if [ ! -z "{{$extension_bin}}" ]; then
@@ -45,23 +49,18 @@ type options struct {
 	EnvironmentVariables map[string]string
 }
 
-type zsh struct {
+type bash struct {
 	exec.Command
 }
 
-// Unlike bash, zsh does not support flag `--init-file`. In order to modify existing
-// $PATH environment variable, and also add command alias(es) to shell, custom zsh
-// dotfiles are used to solve this specific problem. Keep in mind if $HOME/.zshrc
-// exists, the auto generated $ZDOTDIR/.zshrc will also source $HOME/.zshrc file.
-func (v *zsh) Run() error {
+// inject and pass custom run command script to initial interactive shell.
+func (v *bash) Run() error {
 	var (
-		b         bytes.Buffer
-		homedir   = v.GetEnv("HOME")
-		dotdir    = filepath.Join(homedir, ".workspace_shell")
-		zshrcPath = filepath.Join(dotdir, ".zshrc")
-		symlinks  = []string{".zprofile", ".zshenv", ".zlogin", ".zlogout"}
+		b           bytes.Buffer
+		homedir     = v.GetEnv("HOME")
+		dotdir      = filepath.Join(homedir, ".workspace_shell")
+		profilePath = filepath.Join(homedir, ".profile")
 	)
-
 	opts := &options{
 		Home:                 homedir,
 		ExtensionBin:         v.GetEnv("EXT_PATH"),
@@ -70,28 +69,17 @@ func (v *zsh) Run() error {
 		EnvironmentVariables: v.GetEnvs(),
 	}
 
-	// write zsh startup files
+	// write sh startup files
 	fs.Mkdir(dotdir)
-	for _, file := range symlinks {
-		path := filepath.Join(homedir, file)
-		dest := filepath.Join(dotdir, file)
-		fs.Symlink(path, dest)
-	}
-
-	if err := zshrc.Execute(&b, opts); err != nil {
+	if err := profile.Execute(&b, opts); err != nil {
 		return err
 	}
-	fs.WriteFile(zshrcPath, b.Bytes())
-
-	// set zsh dotfile path
-	v.SetEnv(map[string]string{
-		"ZDOTDIR": dotdir,
-	})
+	fs.WriteFile(profilePath, b.Bytes())
 
 	return v.Command.Run()
 }
 
-// New initializes zsh version of exec command
+// New initializes sh version of exec command
 func New(command string, args ...string) exec.Command {
-	return &zsh{exec.New(command, args...)}
+	return &bash{exec.New(command, args...)}
 }
